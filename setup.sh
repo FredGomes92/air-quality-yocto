@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
@@ -15,11 +14,12 @@ fi
 
 echo "Adding bitbake layers..."
 
-pushd ./poky/build &> /dev/null
 bitbake-layers add-layer \
     ${SCRIPT_DIR}/meta-air-quality \
     ${SCRIPT_DIR}/meta-raspberrypi \
     ${SCRIPT_DIR}/meta-openembedded/meta-oe \
     ${SCRIPT_DIR}/meta-openembedded/meta-python \
     ${SCRIPT_DIR}/meta-openembedded/meta-networking
-popd &> /dev/null
+
+echo "Dropping into a shell in the build environment..."
+exec $SHELL
