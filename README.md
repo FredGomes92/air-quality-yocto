@@ -49,10 +49,12 @@ Build: ```bitbake core-image-minimal ```
 
  Individual data visualization:
 
-<p style="display: flex; gap: 5px;">
-  <img src="images/temp.jpg" alt="Temperature Data" style="width: 50%;">
-  <img src="images/pms.jpg" alt="PMS Data" style="width: 50%;">
-</p>
+<table>
+  <tr>
+    <td><img src="images/temp.jpg" alt="Temperature Data" width="100%"></td>
+    <td><img src="images/pms.jpg" alt="PMS Data" width="100%"></td>
+  </tr>
+</table>
 
 
 
