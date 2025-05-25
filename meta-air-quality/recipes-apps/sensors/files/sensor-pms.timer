@@ -1,0 +1,11 @@
+[Unit]
+Description=Run sensor-pms5003 every 2 minutes
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=120
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

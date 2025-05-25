@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Temperature, Humidity & PMS Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Sensor Data</h1>
+    <div class="chart-grid">
+        <div class="chart-container">
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="humidityChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="pmsChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="pmsChartAQI"></canvas>
+        </div>
+        <div class="chart-container">
+            <!-- Reserved for future use -->
+        </div>
+    </div>
+<script>
+    const socket = io();
+
+    function createChart(ctx, datasets) {
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: datasets.map(ds => ({
+                    label: ds.label,
+                    data: [],
+                    borderColor: ds.color,
+                    fill: false,
+                    tension: 0.1
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function addData(chart, values, time = null) {
+        const label = time ? new Date(time).toLocaleTimeString() : new Date().toLocaleTimeString();
+        chart.data.labels.push(label);
+        values.forEach((value, index) => {
+            chart.data.datasets[index].data.push(value);
+        });
+        if (chart.data.labels.length > 50) {
+            chart.data.labels.shift();
+            chart.data.datasets.forEach(ds => ds.data.shift());
+        }
+        chart.update();
+    }
+
+    const temperatureChart = createChart(
+        document.getElementById('temperatureChart').getContext('2d'),
+        [{ label: 'Temperature (°C)', color: 'red' }]
+    );
+
+    const humidityChart = createChart(
+        document.getElementById('humidityChart').getContext('2d'),
+        [{ label: 'Humidity (%)', color: 'blue' }]
+    );
+
+    const pmsChart = createChart(
+        document.getElementById('pmsChartAQI').getContext('2d'),
+        [
+            { label: 'PM1.0 (µg/m³)', color: 'green' },
+            { label: 'PM2.5 (µg/m³)', color: 'orange' },
+            { label: 'PM10 (µg/m³)', color: 'purple' }
+        ]
+    );
+    const pmsChartAQI = createChart(
+        document.getElementById('pmsChart').getContext('2d'),
+        [
+            { label: 'PM2.5 AQI', color: 'orange' },
+            { label: 'PM10 AQI', color: 'purple' }
+        ]
+    );
+
+    socket.on('connect', () => {
+        console.log("Connected to WebSocket");
+    });
+
+    socket.on('new_temperature', data => {
+        console.log('New temperature data:', data);
+        addData(temperatureChart, [data.value], data.time);
+    });
+
+    socket.on('new_humidity', data => {
+        console.log('New humidity data:', data);
+        addData(humidityChart, [data.value], data.time);
+    });
+
+    socket.on('new_pms', data => {
+        console.log('New PMS data:', data);
+
+        addData(pmsChart, [
+            data.pms['pm1.0_atm'],
+            data.pms['pm2.5_atm'],
+            data.pms['pm10_atm'],
+        ], data.time);
+
+        addData(pmsChartAQI, [
+            data.pms['aqi_pm25'],
+            data.pms['aqi_pm10'],
+        ], data.time);
+    });
+
+    socket.on('initial_data', data => {
+        console.log('Received initial data:', data);
+
+        const chartMap = {
+            temperature: temperatureChart,
+            humidity: humidityChart,
+            pms: pmsChart
+        };
+
+        Object.keys(data).forEach(key => {
+            const chart = chartMap[key];
+            if (chart && Array.isArray(data[key])) {
+                data[key].forEach(entry => {
+                    if (typeof entry === 'object' && 'pms' in entry && 'time' in entry) {
+                        if (key === 'pms') {
+                            addData(chart, [
+                                entry.pms['pm1.0_atm'],
+                                entry.pms['pm2.5_atm'],
+                                entry.pms['pm10_atm']
+                            ], entry.time);
+                            addData(pmsChartAQI, [
+                                entry.pms['aqi_pm25'],
+                                entry.pms['aqi_pm10']
+                            ], entry.time);
+                        }
+                    }
+                    else {
+                        addData(chart, [entry.value], entry.time);
+                    }
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>

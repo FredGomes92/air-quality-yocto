@@ -1,0 +1,10 @@
+[Unit]
+Description=Sensor-pms5003 reading
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sensor-pms /dev/ttyAMA0
+
+[Install]
+WantedBy=multi-user.target
+

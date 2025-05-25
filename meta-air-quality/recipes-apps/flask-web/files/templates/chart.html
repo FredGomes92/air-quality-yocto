@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ chart_type|capitalize }} Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <style>
+        .chart-container {
+            width: 80%;
+            height: 500px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ chart_type|capitalize }} Data</h1>
+    <div class="chart-container">
+        <canvas id="mainChart"></canvas>
+    </div>
+
+    <script>
+        const socket = io();
+        const chartType = "{{ chart_type }}";
+        const ctx = document.getElementById('mainChart').getContext('2d');
+
+        const colors = {
+            temperature: ['red'],
+            humidity: ['blue'],
+            pms: ['green', 'orange', 'purple'],
+            pms_aqi: ['orange', 'purple']
+        };
+
+        const labels = {
+            temperature: ['Temperature (°C)'],
+            humidity: ['Humidity (%)'],
+            pms: ['PM1.0 (µg/m³)', 'PM2.5 (µg/m³)', 'PM10 (µg/m³)'],
+            pms_aqi: ['PM2.5 AQI', 'PM10 AQI']
+        };
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: labels[chartType].map((label, idx) => ({
+                    label: label,
+                    data: [],
+                    borderColor: colors[chartType][idx],
+                    fill: false,
+                    tension: 0.1
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        function addData(chart, values, time = null) {
+            const label = time ? new Date(time).toLocaleTimeString() : new Date().toLocaleTimeString();
+            chart.data.labels.push(label);
+            values.forEach((value, index) => {
+                chart.data.datasets[index].data.push(value);
+            });
+            if (chart.data.labels.length > 50) {
+                chart.data.labels.shift();
+                chart.data.datasets.forEach(ds => ds.data.shift());
+            }
+            chart.update();
+        }
+
+        socket.on('connect', () => {
+            console.log("Connected to WebSocket");
+        });
+
+        socket.on('new_${chartType}', data => {
+            console.log('New ${chartType} data:', data);
+            if (chartType === 'pms') {
+                addData(chart, [
+                    data.pms['pm1.0_atm'],
+                    data.pms['pm2.5_atm'],
+                    data.pms['pm10_atm']
+                ], data.time);
+            }
+            else if (chartType === 'pms_aqi') {
+                addData(chart, [
+                    data.pms['aqi_pm25'],
+                    data.pms['aqi_pm10']
+                ], data.time);
+            } else if (chartType === 'temperature' || chartType === 'humidity') {
+                addData(chart, [data.value], data.time);
+            }
+        });
+
+        socket.on('initial_data', data => {
+            console.log('Received initial data:', data);
+
+            // Get only the data relevant to the current chart type
+            const entries = data[chartType];
+            if (!Array.isArray(entries)) return;
+
+            // Clear existing chart data
+            chart.data.labels = [];
+            chart.data.datasets.forEach(ds => ds.data = []);
+
+            entries.forEach(entry => {
+                const label = entry.time ? new Date(entry.time).toLocaleTimeString() : new Date().toLocaleTimeString();
+
+                if (chartType === 'pms' && entry.pms && typeof entry.pms === 'object') {
+                    const values = [
+                        entry.pms['pm1.0_atm'],
+                        entry.pms['pm2.5_atm'],
+                        entry.pms['pm10_atm']
+                    ];
+                    chart.data.labels.push(label);
+                    values.forEach((val, i) => {
+                        chart.data.datasets[i].data.push(val);
+                    });
+
+                } else if (chartType === 'pms_aqi' && entry.pms && typeof entry.pms === 'object') {
+                    const values = [
+                        entry.pms['aqi_pm25'],
+                        entry.pms['aqi_pm10']
+                    ];
+                    chart.data.labels.push(label);
+                    values.forEach((val, i) => {
+                        chart.data.datasets[i].data.push(val);
+                    });
+                } else if ((chartType === 'temperature' || chartType === 'humidity') && 'value' in entry) {
+                    chart.data.labels.push(label);
+                    chart.data.datasets[0].data.push(entry.value);
+                }
+            });
+
+            chart.update();
+        });
+
+
+        socket.on('disconnect', () => {
+            console.log("Disconnected from WebSocket");
+        });
+    </script>
+</body>
+</html>

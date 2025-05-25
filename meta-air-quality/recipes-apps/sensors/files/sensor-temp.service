@@ -1,0 +1,9 @@
+[Unit]
+Description=Sensor temperature reading
+
+[Service]
+ExecStart=/usr/bin/sensor-temp
+Restart=oneshot
+
+[Install]
+WantedBy=multi-user.target
