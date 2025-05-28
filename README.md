@@ -4,7 +4,7 @@ This project provides an embedded Linux solution to measure air quality using th
 
 ## How does it work ?
 
-The system is composed of services to read the data from the sensors and another service that will subscrive to that data and and  will display it in a web page. The exchange of data is done trough an MQTT broker, as exemplified in the figure below.
+The system is composed of services to read the data from the sensors and another service that will subscribe to that data and and  will display it in a web page. The exchange of data is done trough an MQTT broker, as exemplified in the figure below.
 
  ![ Set-up - sensors + raspberrypi](images/generic_diagram.drawio.png)
 
