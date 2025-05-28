@@ -2,16 +2,16 @@
 
 This project provides an embedded Linux solution to measure air quality using the Yocto Project (Styhead).
 
-## Features
-
-- Sensor integration for AM2330 (digital temperature and humidity sensor) and Plantover PMS5003 sensor (particles matter sensor)
-- Web-app creation for visualization of the data from the sensors
-
 ## How does it work ?
 
 The system is composed of services to read the data from the sensors and another service that will subscrive to that data and and  will display it in a web page. The exchange of data is done trough an MQTT broker, as exemplified in the figure below.
 
  ![ Set-up - sensors + raspberrypi](images/generic_diagram.drawio.png)
+
+#### Features
+
+- Sensor integration for AM2330 (digital temperature and humidity sensor) and Plantover PMS5003 sensor (particles matter sensor)
+- Web-app creation for visualization of the data from the sensors
 
 
 ## Getting Started
