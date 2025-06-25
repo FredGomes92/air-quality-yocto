@@ -8,6 +8,7 @@ The system is composed of services to read the data from the sensors and another
 
  ![ Set-up - sensors + raspberrypi](images/generic_diagram.drawio.png)
 
+
 #### Features
 
 - Sensor integration for AM2330 (digital temperature and humidity sensor) and Plantover PMS5003 sensor (particles matter sensor)
@@ -46,8 +47,8 @@ DISTRO ?= "air-quality"
 Build: ```bitbake core-image-minimal ```
 
 ## Setup
-
- ![ Set-up - sensors + raspberrypi](images/rpi.jpg)
+ ![ Set-up - connections](images/circuit_image.svg)
+ <img src="images/rpi.jpg" style="width:50%; height:auto;">
 
  All data visualization:
 
