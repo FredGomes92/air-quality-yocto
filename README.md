@@ -48,7 +48,7 @@ Build: ```bitbake core-image-minimal ```
 
 ## Setup
  ![ Set-up - connections](images/circuit_image.svg)
- <img src="images/rpi.jpg" style="width:50%; height:auto;">
+ <img src="images/rpi.jpg" style="width:80%; height:auto;">
 
  All data visualization:
 
